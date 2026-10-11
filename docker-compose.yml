@@ -1,0 +1,103 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bevis-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bevis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bevis}
+      POSTGRES_DB: ${POSTGRES_DB:-bevis}
+    volumes:
+      - bevis-pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-bevis} -d ${POSTGRES_DB:-bevis}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bevis-backend
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=8000
+      - BEVIS_ENVIRONMENT=development
+      - BEVIS_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-bevis}:${POSTGRES_PASSWORD:-bevis}@db:5432/${POSTGRES_DB:-bevis}
+      - BEVIS_REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: bevis-redis
+    # No volume on purpose: sessions are ephemeral. A restart logs
+    # everyone out, which is acceptable and even desirable in dev.
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bevis-worker
+    env_file:
+      - .env
+    command: celery -A services.queue:celery_app worker --loglevel=info --concurrency=2
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - BEVIS_ENVIRONMENT=development
+      - BEVIS_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-bevis}:${POSTGRES_PASSWORD:-bevis}@db:5432/${POSTGRES_DB:-bevis}
+      - BEVIS_REDIS_URL=redis://redis:6379/0
+    restart: unless-stopped
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bevis-flower
+    command: celery -A services.queue:celery_app flower --port=5555
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - BEVIS_ENVIRONMENT=development
+      - BEVIS_REDIS_URL=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    restart: unless-stopped
+
+volumes:
+  bevis-pgdata:
