@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from config.database import get_db
-from models.user import User
+from models.user import ROLE_ADMIN, User
 from routes.deps import get_current_user
 from schemas.user import VerifyEmailIn
 from services import verification
@@ -12,6 +12,7 @@ from services.email import queue_verification_email
 from schemas.user import (
     ChangePassword,
     ForgotPassword,
+    LogoutIn,
     RefreshToken,
     ResetPassword,
     AuthenticateUser,
@@ -97,6 +98,23 @@ def refresh(body: RefreshToken, db: Session = Depends(get_db)) -> dict:
             detail="Invalid or expired refresh token",
         )
     return pair
+
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+def logout(body: LogoutIn) -> dict:
+    from services import token_store
+
+    if body.refresh_token:
+        token_store.revoke(body.refresh_token)
+    return {"message": "Signed out."}
+
+
+@router.post("/logout-all", status_code=status.HTTP_200_OK)
+def logout_all(user: User = Depends(get_current_user)) -> dict:
+    from services import token_store
+
+    token_store.revoke_all_for_user(user.id)
+    return {"message": "Signed out everywhere."}
 
 
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)

@@ -13,6 +13,9 @@ wheels/
 *.db
 *.db-journal
 .env
+secrets/
+.env.*
+!.env.example
 
 # Test and coverage artifacts
 .pytest_cache/

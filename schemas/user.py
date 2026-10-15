@@ -29,6 +29,12 @@ class RefreshToken(BaseModel):
     refresh_token: str = Field(min_length=1)
 
 
+class LogoutIn(BaseModel):
+    # Best-effort: absent or dead tokens still return 200, because the
+    # end state the user wants (logged out locally) already holds.
+    refresh_token: str | None = None
+
+
 class ForgotPassword(BaseModel):
     email: EmailStr
 
@@ -75,6 +81,7 @@ class UpdateProfile(BaseModel):
 class OnboardingIn(BaseModel):
     username: str = Field(min_length=1, max_length=60)
     headline: str = Field(min_length=1, max_length=140)
+    display_name: str | None = Field(default=None, max_length=120)
 
 
 class DeleteRequest(BaseModel):

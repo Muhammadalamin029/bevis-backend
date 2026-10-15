@@ -8,7 +8,9 @@ from config.database import SessionLocal
 from config.settings import settings
 from routes.admin import router as admin_router
 from routes.auth import router as auth_router
+from routes.github import router as github_router
 from routes.health import router as health_router
+from routes.projects import router as projects_router
 from routes.users import router as users_router
 from services.auth_service import ensure_admin_from_env
 from services.rate_limit import RateLimitMiddleware
@@ -39,6 +41,8 @@ app.include_router(health_router)
 app.include_router(auth_router, prefix=settings.api_prefix)
 app.include_router(users_router, prefix=settings.api_prefix)
 app.include_router(admin_router, prefix=settings.api_prefix)
+app.include_router(github_router, prefix=settings.api_prefix)
+app.include_router(projects_router, prefix=settings.api_prefix)
 app.add_middleware(RateLimitMiddleware)
 
 

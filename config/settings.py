@@ -51,5 +51,15 @@ class Settings(BaseSettings):
     admin_email: str = ""
     admin_password: str = ""
 
+    # GitHub App. Empty means GitHub features refuse cleanly (503).
+    github_app_id: str = ""
+    github_app_slug: str = ""
+    github_private_key: str = ""
+    github_private_key_file: str = ""
+    github_webhook_secret: str = ""
+    github_client_id: str = ""
+    github_client_secret: str = ""
+    github_api_url: str = "https://api.github.com"
+
 
 settings = Settings()

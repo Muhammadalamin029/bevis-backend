@@ -101,7 +101,11 @@ def complete_onboarding(
         )
     try:
         profiles.update_profile(
-            db, user.id, username=body.username, headline=body.headline
+            db,
+            user.id,
+            username=body.username,
+            headline=body.headline,
+            display_name=body.display_name,
         )
     except ValueError as exc:
         message = str(exc)

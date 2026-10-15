@@ -38,3 +38,14 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin only"
         )
     return user
+
+
+def require_github() -> None:
+    """Fail cleanly when GitHub integration is not configured."""
+    from services import github_service
+
+    if not github_service.configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="GitHub integration is not configured.",
+        )

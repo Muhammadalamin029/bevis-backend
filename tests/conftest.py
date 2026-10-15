@@ -10,6 +10,10 @@ os.environ["BEVIS_ACCESS_TOKEN_EXPIRE_MINUTES"] = "60"
 os.environ["BEVIS_SENDLIB_API_KEY"] = ""
 # Tests must never depend on a real Turnstile secret either.
 os.environ["BEVIS_TURNSTILE_SECRET_KEY"] = ""
+# No admin seeding during tests: a developer .env with admin creds
+# would otherwise create phantom users on every app boot.
+os.environ["BEVIS_ADMIN_EMAIL"] = ""
+os.environ["BEVIS_ADMIN_PASSWORD"] = ""
 
 import pytest
 from alembic import command
